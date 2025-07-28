@@ -2,7 +2,7 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ "master" ]  
+    branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
 
@@ -12,7 +12,7 @@ permissions:
   actions: read
   security-events: write
   id-token: write
- 
+  dependencies: write
 
 jobs:
   build:
@@ -44,8 +44,13 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    - name: Create test properties
+    - name: Clean and create test properties
       run: |
+        # Supprimer le fichier corrompu s'il existe
+        rm -f src/main/resources/application-test.properties
+        rm -f src/test/resources/application-test.properties
+        
+        # Créer le répertoire et le bon fichier
         mkdir -p src/test/resources
         cat > src/test/resources/application-test.properties << 'EOF'
         spring.datasource.url=jdbc:mysql://localhost:3306/todoapp_test
@@ -53,13 +58,19 @@ jobs:
         spring.datasource.password=test_password
         spring.jpa.hibernate.ddl-auto=create-drop
         spring.jpa.show-sql=false
+        EOF
 
     - name: Wait for MySQL to be ready
       run: |
         timeout 60 bash -c 'until mysqladmin ping -h127.0.0.1 --silent; do sleep 1; done'
 
     - name: Build and test with Maven
-      run: mvn -B package --file pom.xml -Dspring.profiles.active=test
+      run: mvn -B package --file pom.xml -DskipTests=false
+      env:
+        SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/todoapp_test
+        SPRING_DATASOURCE_USERNAME: root
+        SPRING_DATASOURCE_PASSWORD: test_password
+        SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
 
     - name: Update dependency graph
       uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
