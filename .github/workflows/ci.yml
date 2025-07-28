@@ -2,9 +2,9 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ "master" ]  
+    branches: [ "main" ]  # Changé de master à main
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -35,7 +35,19 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
+    # Ajout des propriétés de test
+    - name: Create test properties
+      run: |
+        mkdir -p src/test/resources
+        cat > src/test/resources/application-test.properties << EOF
+        spring.datasource.url=jdbc:mysql://localhost:3306/todoapp_test
+        spring.datasource.username=root
+        spring.datasource.password=test_password
+        spring.jpa.hibernate.ddl-auto=create-drop
+        EOF
+
     - name: Build with Maven
       run: mvn -B package --file pom.xml -Dspring.profiles.active=test
 
-   
+    - name: Update dependency graph
+      uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
