@@ -2,9 +2,9 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]  # Changé de master à main
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
 
 # Ajout des permissions nécessaires
 permissions:
@@ -12,7 +12,7 @@ permissions:
   actions: read
   security-events: write
   id-token: write
-  dependencies: write
+  
 
 jobs:
   build:
