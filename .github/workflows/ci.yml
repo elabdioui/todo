@@ -47,13 +47,12 @@ jobs:
     - name: Create test properties
       run: |
         mkdir -p src/test/resources
-        cat > src/test/resources/application-test.properties << EOF
+        cat > src/test/resources/application-test.properties << 'EOF'
         spring.datasource.url=jdbc:mysql://localhost:3306/todoapp_test
         spring.datasource.username=root
         spring.datasource.password=test_password
         spring.jpa.hibernate.ddl-auto=create-drop
         spring.jpa.show-sql=false
-        EOF
 
     - name: Wait for MySQL to be ready
       run: |
