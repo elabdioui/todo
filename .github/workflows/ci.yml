@@ -2,15 +2,23 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ "master" ]  # Changé de master à main
+    branches: [ "main" ]  # Changé de master à main
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
+
+# Ajout des permissions nécessaires
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  id-token: write
+  dependencies: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
     
-    # Ajout du service MySQL
+    # Service MySQL pour les tests
     services:
       mysql:
         image: mysql:8.0
@@ -26,7 +34,8 @@ jobs:
           --health-retries=3
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -35,7 +44,6 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    # Ajout des propriétés de test
     - name: Create test properties
       run: |
         mkdir -p src/test/resources
@@ -44,9 +52,14 @@ jobs:
         spring.datasource.username=root
         spring.datasource.password=test_password
         spring.jpa.hibernate.ddl-auto=create-drop
+        spring.jpa.show-sql=false
         EOF
 
-    - name: Build with Maven
+    - name: Wait for MySQL to be ready
+      run: |
+        timeout 60 bash -c 'until mysqladmin ping -h127.0.0.1 --silent; do sleep 1; done'
+
+    - name: Build and test with Maven
       run: mvn -B package --file pom.xml -Dspring.profiles.active=test
 
     - name: Update dependency graph
